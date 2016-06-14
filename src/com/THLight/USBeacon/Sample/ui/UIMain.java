@@ -25,6 +25,8 @@ import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.app.Dialog;
 import android.app.Fragment;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -42,7 +44,8 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
 import android.support.v4.app.ActionBarDrawerToggle;
-import android.support.v4.app.FragmentManager;
+//import android.support.v4.app.FragmentManager;
+//import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
@@ -51,12 +54,14 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ImageView.ScaleType;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -66,6 +71,8 @@ import com.THLight.USBeacon.Sample.R;
 import com.THLight.USBeacon.Sample.ScanediBeacon;
 import com.THLight.USBeacon.Sample.THLApp;
 import com.THLight.USBeacon.Sample.THLConfig;
+import com.THLight.USBeacon.Sample.itemFragment.FragmentAbout;
+import com.THLight.USBeacon.Sample.itemFragment.FragmentBook;
 import com.THLight.Util.THLLog;
 
 
@@ -89,7 +96,7 @@ public class UIMain extends Activity implements iBeaconScanManager.OniBeaconScan
 	 private ActionBarDrawerToggle drawerToggle;
 	 private CharSequence mDrawerTitle;
 	 private CharSequence mTitle;
-	
+	 String[] drawer_menu;
 	LayoutInflater inflater;
 	View layout_above;
 	private AlertDialog GHeadUI;
@@ -106,6 +113,7 @@ public class UIMain extends Activity implements iBeaconScanManager.OniBeaconScan
 	EditText ev_mail;
 	Button btn_submitid;
 	ImageView img_userhead;
+	ImageView img_logo;
 	double RangeBound =20;
 	String record="";
 	String WEB_URL="http://120.114.186.13/app_/";
@@ -296,7 +304,8 @@ public class UIMain extends Activity implements iBeaconScanManager.OniBeaconScan
 	protected void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
-
+		img_logo=(ImageView)findViewById(R.id.img_logo);
+//		img_logo.setScaleType(ScaleType.FIT_END);
 //		BS = new BeaconCheck(this);
 		startService(new Intent(this,BeaconService.class)); 
 		inflater = getLayoutInflater();
@@ -511,9 +520,11 @@ public class UIMain extends Activity implements iBeaconScanManager.OniBeaconScan
     }
     
     private void initDrawerList(){
-        String[] drawer_menu = this.getResources().getStringArray(R.array.drawer_menu);
+       drawer_menu = this.getResources().getStringArray(R.array.drawer_menu);
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, R.layout.drawer_list_item, drawer_menu);
         lstDrawer.setAdapter(adapter);
+        
+        lstDrawer.setOnItemClickListener(new DrawerItemClickListener());
     }
     public boolean onOptionsItemSelected(MenuItem item) {
         //home  undone
@@ -556,37 +567,68 @@ public class UIMain extends Activity implements iBeaconScanManager.OniBeaconScan
     	}
     }
 	
-//	private void selectItem(int position) {
-//	    Fragment fragment = null;
-//	    switch (position) {
-//	    case 0:
-//	        fragment = new FragmentApple();
-//	        break;
-//	    case 1:
-//	        fragment = new FragmentBook();
-//	        break;
-//	    case 2:
-//	        fragment = new FragmentCat();
-//	        Bundle args = new Bundle();
-//	        args.putString(FragmentCat.CAT_COLOR, "Brown");
-//	        fragment.setArguments(args);
-//	        break;
-//	    default:
-//	        //還沒製作的選項，fragment 是 null，直接返回
-//	        return;
-//	    }
-//	    FragmentManager fragmentManager = getFragmentManager();
-//	    fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).commit();
-//	    // 更新被選擇項目，換標題文字，關閉選單
-//	    lstDrawer.setItemChecked(position, true);
-//	    setTitle(drawer_menu[position]);
-//	    layDrawer.closeDrawer(lstDrawer);
-//	}
-//	@Override
-//	public void setTitle(CharSequence title) {
-//	    mTitle = title;
-//	    getActionBar().setTitle(mTitle);
-//	}
+	private class DrawerItemClickListener implements ListView.OnItemClickListener{
+		@Override
+	    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+	        selectItem(position);
+	    }
+	}
+		private void selectItem(int position) {
+		    Fragment fragment = null;
+		    switch (position) {
+		    case 0:
+//		        fragment = new FragmentApple();
+		        break;
+		    case 1:
+//		        fragment = new FragmentBook();
+		        break;
+		    case 2:
+//		        fragment = new FragmentCat();
+//		        Bundle args = new Bundle();
+//		        args.putString(FragmentCat.CAT_COLOR, "Brown");
+//		        fragment.setArguments(args);
+		        break;
+		    case 3:
+		    	openFansPage();
+		    	break;
+		    case 4:
+		    	fragment = new FragmentAbout();
+		    	break;
+		    default:
+		        //還沒製作的選項，fragment 是 null，直接返回
+		        return;
+		    }
+		    FragmentManager fragmentManager = getFragmentManager();
+		  //[方法1]直接置換，無法按 Back 返回
+//	        fragmentManager.beginTransaction().replace(R.id.content_frame, fragment).commit();
+
+	        //[方法2]開啟並將前一個送入堆疊
+	        //重要！ 必須加寫 "onBackPressed"
+	        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+			fragmentTransaction.replace(R.id.content_frame, fragment);
+			fragmentTransaction.addToBackStack("home");
+			fragmentTransaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
+			fragmentTransaction.commit();
+			
+		    // 更新被選擇項目，換標題文字，關閉選單
+		    lstDrawer.setItemChecked(position, true);
+		    setTitle(drawer_menu[position]);
+		    layDrawer.closeDrawer(lstDrawer);
+		}
+		@Override
+		public void setTitle(CharSequence title) {
+		    mTitle = title;
+		    getActionBar().setTitle(mTitle);
+		}
+		
+		
+		public void openFansPage(){
+			Uri uri = Uri.parse("https://www.facebook.com/Data-Systems-Lab-344107525681540/?fref=ts");
+			Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+			startActivity(intent);
+		}
+
+	
 	
 	public int checkStoreinfo() throws IOException{
 		
@@ -630,6 +672,7 @@ public class UIMain extends Activity implements iBeaconScanManager.OniBeaconScan
     	Dialogcheck(user_data.m_first_name,user_data.m_last_name,user_data.m_head);}
 	}
 	
+	
 	/** ================================================ */
 	@Override
 	public void onResume()
@@ -644,11 +687,18 @@ public class UIMain extends Activity implements iBeaconScanManager.OniBeaconScan
 		super.onPause();
 	}
 
-	/** ================================================ */
+	/**
+	 * Back 鍵處理
+	 * 當最後一個 stack 為 R.id.content_frame, 結束 App
+	 ==================================================*/
 	@Override
-	public void onBackPressed()
-	{
+	public void onBackPressed() {
 		super.onBackPressed();
+		FragmentManager fragmentManager = this.getFragmentManager();
+		int stackCount = fragmentManager.getBackStackEntryCount();
+		if (stackCount == 0) {
+			this.finish();
+		}
 	}
 	
 	/** ================================================ */
@@ -1073,6 +1123,7 @@ class BLEListAdapter extends BaseAdapter
 		mListItems.clear();
 	}
 	/** ================================================ */
+	
 	
 }
 

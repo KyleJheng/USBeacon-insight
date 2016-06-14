@@ -20,7 +20,7 @@ public class FragmentCat extends Fragment {
         return initView(inflater, container);
     }
     private View initView(LayoutInflater inflater, ViewGroup container) {
-        View view = inflater.inflate(R.menu.fragment_cat, container, false);
+        View view = inflater.inflate(R.layout.fragment_cat, container, false);
         TextView txtCat = (TextView) view.findViewById(R.id.txtCat);
         String colorCat = color + " " + txtCat.getText().toString();
         txtCat.setText(colorCat);
